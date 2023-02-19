@@ -1,0 +1,16 @@
+syntax = "proto3";
+option java_multiple_files = true;
+package com.integration.service;
+
+service IntegrationService {
+  rpc integrate(IntegrateRequest) returns (IntegrateResponse);
+}
+
+message IntegrateRequest {
+  string request_id = 1;
+}
+
+message IntegrateResponse {
+  string status = 1;
+}
+
