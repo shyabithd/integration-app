@@ -19,7 +19,7 @@ public class IntergrationClient {
                 = IntegrationServiceGrpc.newBlockingStub(channel);
 
         IntegrateResponse helloResponse = stub.integrate(IntegrateRequest.newBuilder()
-                .setRequestId("Baeldung")
+                .setRequestId("Test")
                 .build());
 
         System.out.println(helloResponse);

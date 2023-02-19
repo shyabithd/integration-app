@@ -10,21 +10,25 @@ import org.springframework.beans.factory.annotation.Autowired;
 @GrpcService
 public class IntergrationServiceImpl extends IntegrationServiceGrpc.IntegrationServiceImplBase {
 
-    IntergrationServiceImpl() {
-        System.out.println("Hello");
-    }
-
     @Autowired
     private ParserService parserService;
 
     @Override
     public void integrate(IntegrateRequest request, StreamObserver<IntegrateResponse> responseObserver) {
 
-        IntegrateResponse response = IntegrateResponse.newBuilder()
-                .setStatus("greeting")
-                .build();
+        IntegrateResponse response;
 
-        System.out.println(request);
+        try {
+            parserService.parse();
+            response = IntegrateResponse.newBuilder()
+                    .setStatus("Completed")
+                    .build();
+        } catch (Exception e) {
+             response = IntegrateResponse.newBuilder()
+                    .setStatus("Failed")
+                    .build();
+        }
+
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
