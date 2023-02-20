@@ -9,8 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.beans.factory.annotation.Autowired;
-import product.Product;
-import product.ProductServiceGrpc;
 import user.User;
 import user.UserServiceGrpc;
 
@@ -27,31 +25,22 @@ public class FileEntryProcessor  implements ItemProcessor<FileEntry, OutputEntry
         ManagedChannel productChannel = connectionRegistry.getChannel("Product");
 
         UserServiceGrpc.UserServiceBlockingStub userStub = UserServiceGrpc.newBlockingStub(userChannel);
-        User.UserResponse user = userStub.createUser(User.CreateUserRequest.newBuilder()
-                .setFullName(StringValue.newBuilder().setValue(fileEntry.getFull_name()).build())
-                .setEmail(fileEntry.getEmail())
-                .setAddress(User.ShippingAddress.newBuilder()
-                        .setAddress(StringValue.newBuilder().setValue(fileEntry.getShipping_address()))
-                        .setCountry(StringValue.newBuilder().setValue(fileEntry.getCountry())).build())
-                .setPassword(StringValue.newBuilder().setValue(fileEntry.getCredit_card_number()).build())
-                .addPaymentMethods(User.PaymentMethod.newBuilder()
-                        .setCreditCardNumber(StringValue.newBuilder().setValue(fileEntry.getCredit_card_number()))
-                        .setCreditCardType(StringValue.newBuilder().setValue(fileEntry.getCredit_card_type())))
-                .build());
-        LOGGER.debug(user.getFullName() + " inserted.");
+        User.UsersResponse users = userStub.search(User.UserSearchFilter.newBuilder().setEmail(StringValue.newBuilder().setValue(fileEntry.getEmail()).build()).build());
+        if (users == null) {
+            LOGGER.error("user " + fileEntry.getFull_name() + " retrieved failed, received null response.");
+            return null;
+        }
 
-        ProductServiceGrpc.ProductServiceBlockingStub productStub = ProductServiceGrpc.newBlockingStub(productChannel);
-        Product.ProductResponse product = productStub.getProductByPid(StringValue.newBuilder().setValue(fileEntry.getProduct_pid()).build());
+        if (users.getUsersList().size() == 0) {
+            LOGGER.error("user " + fileEntry.getFull_name() + " retrieved failed, received empty response.");
+            return null;
+        }
 
-        Product.ProductResponse productResponse = productStub.createProduct(Product.CreateProductRequest.newBuilder()
-                .setName(product.getName())
-                .setPid(StringValue.newBuilder().setValue(fileEntry.getEmail()).build())
-                .setPricePerUnit(product.getPricePerUnit())
-                .build());
-        LOGGER.info(productResponse.getName() + " inserted.");
+        User.UserResponse user = users.getUsers(0);
+        LOGGER.debug(user.getFullName() + " retrieved successfully.");
 
         OutputEntry outputEntry = new OutputEntry();
-        outputEntry.setUserPid("sdf");
+        outputEntry.setUserPid(user.getPid());
         outputEntry.setOrderPid(fileEntry.getOrder_id());
         outputEntry.setSupplierPid(fileEntry.getSupplier_id());
 

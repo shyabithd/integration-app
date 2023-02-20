@@ -45,6 +45,9 @@ public class BatchConfiguration {
         @Value("${file.output.path}")
         private String filePath;
 
+        @Value("${file.chunk}")
+        private Integer chunk;
+
         @Bean
         public FlatFileItemReader<FileEntry> reader() {
                 LOGGER.info("create reader called");
@@ -96,7 +99,7 @@ public class BatchConfiguration {
         public Step step() {
                 LOGGER.info("create step called");
                 return stepBuilderFactory.get("step")
-                        .<FileEntry, OutputEntry>chunk(10)
+                        .<FileEntry, OutputEntry>chunk(chunk)
                         .reader(reader())
                         .processor(processor())
                         .writer(writer())
